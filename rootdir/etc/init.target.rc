@@ -28,6 +28,9 @@
 
 import /vendor/etc/init/hw/init.s2.usb.rc
 
+on early-init
+    symlink /data/tombstones /tombstones
+
 on fs
     wait /dev/block/platform/soc.0/${ro.boot.bootdevice}
     symlink /dev/block/platform/soc.0/${ro.boot.bootdevice} /dev/block/bootdevice
@@ -55,6 +58,11 @@ on late-fs
     mount_all /system/vendor/etc/fstab.qcom --late
 
 on post-fs-data
+    mkdir /data/tombstones 0771 system system
+    mkdir /tombstones/modem 0771 system system
+    mkdir /tombstones/lpass 0771 system system
+    mkdir /tombstones/wcnss 0771 system system
+    mkdir /tombstones/dsps 0771 system system
     mkdir /persist/data/sfs 0700 system system
     mkdir /persist/data/tz 0700 system system
     mkdir /data/misc/dts 0770 media audio
@@ -101,9 +109,19 @@ on post-fs-data
     # fingerprint
     chown system system  /dev/goodix_fp
     chmod 0644 /dev/goodix_fp
+    chown system system  /vendor/bin/gx_fpd
+    chmod 0755 /vendor/bin/gx_fpd
 
     chmod 660 /persist/serialno
     chown system system /persist/serialno
+
+    # ir
+    chmod 666 /sys/remote/enable
+    chown system system /sys/remote/enable
+    chmod 666 /dev/ttyHSL1
+    chmod 666 /dev/ttyHS1
+    chown system system /dev/ttyHSL1
+    chown system system /dev/ttyHS1
 
     # leds
     chown system system /sys/module/leds_aw2013/parameters/aw2013_sleep_led
@@ -142,7 +160,7 @@ mkdir /data/vendor/camera 0770 camera camera
 
 # start camera server as daemon
 service qcamerasvr /system/bin/mm-qcamera-daemon
-    class main
+    class late_start
     user camera
     group camera system inet input graphics
     writepid /dev/cpuset/camera-daemon/tasks
@@ -184,8 +202,10 @@ on boot
 
     chown system system /proc/touchpanel/capacitive_keys_enable
 
-service wcnss-service /system/vendor/bin/wcnss_service
-    class late_start
+    write /proc/sys/kernel/sched_boost 1
+
+service wcnss-service /system/bin/wcnss_service
+    class main
     user system
     group system wifi radio
     oneshot
@@ -260,8 +280,11 @@ service gx_fpd /vendor/bin/gx_fpd
     seclabel u:r:goodix:s0
 
 on charger
+    load_system_props
     setprop persist.sys.usb.config mass_storage
     start qcom-post-boot
+    setprop persist.sys.usb.config mass_storage
+    start hvdcp_opti
     start thermal-engine
 
 service adsprpcd /system/vendor/bin/adsprpcd
@@ -269,6 +292,12 @@ service adsprpcd /system/vendor/bin/adsprpcd
     user media
     group media
     writepid /dev/cpuset/system-background/tasks
+
+service hvdcp_opti /system/vendor/bin/hvdcp_opti
+    class main
+    user root
+    group system wakelock
+    seclabel u:r:hvdcp:s0
 
 service vendor.per_mgr /system/vendor/bin/pm-service
     class core

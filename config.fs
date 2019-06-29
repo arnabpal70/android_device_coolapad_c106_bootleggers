@@ -1,6 +1,9 @@
 [AID_VENDOR_QTI_DIAG]
 value:2901
 
+[AID_VENDOR_QDSS]
+value:2902
+
 [AID_VENDOR_RFS]
 value:2903
 
@@ -144,6 +147,12 @@ mode: 0755
 user:  AID_GPS
 group: AID_GPS
 caps: NET_BIND_SERVICE BLOCK_SUSPEND
+
+[vendor/bin/sensors.qcom]
+mode: 0755
+user: AID_SYSTEM
+group: AID_SYSTEM
+caps: NET_BIND_SERVICE
 
 [firmware/]
 mode: 0771

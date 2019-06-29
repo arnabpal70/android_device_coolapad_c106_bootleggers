@@ -449,6 +449,61 @@ service tftp_server /vendor/bin/tftp_server
     user root
     writepid /dev/cpuset/system-background/tasks
 
+# FM
+on property:hw.fm.init=0
+    write /sys/module/radio_iris_transport/parameters/fmsmd_set 0
+
+on property:hw.fm.init=1
+    write /sys/module/radio_iris_transport/parameters/fmsmd_set 1
+
+service bt-dun /system/bin/dun-server /dev/smd7 /dev/rfcomm0
+    class late_start
+    user bluetooth
+    group bluetooth net_bt_admin inet
+    disabled
+    oneshot
+
+service bt-sap /system/bin/sapd 15
+    user bluetooth
+    group bluetooth net_bt_admin
+    class late_start
+    disabled
+    oneshot
+
+service btsnoop /system/bin/btsnoop
+   user bluetooth
+   group bluetooth net_bt_admin sdcard_rw sdcard_r media_rw
+   class late_start
+   disabled
+   oneshot
+
+service bt_logger /system/bin/bt_logger
+   user bluetooth
+   group bluetooth net_bt_admin sdcard_rw sdcard_r media_rw
+   class late_start
+   disabled
+   oneshot
+
+service ftmd /system/bin/logwrapper /system/bin/ftmdaemon
+    class late_start
+    user root
+    group bluetooth net_bt_admin misc diag net_bt
+    disabled
+    oneshot
+
+service port-bridge /system/vendor/bin/port-bridge
+    class main
+    user radio system
+    group radio system inet
+    disabled
+    oneshot
+
+service qmiproxy /system/bin/qmiproxy
+    class main
+    user radio
+    group radio diag
+    disabled
+
 # QMUX must be in multiple groups to support external process connections
 service qmuxd /vendor/bin/qmuxd
     class main
@@ -551,10 +606,14 @@ service ril-daemon2 /vendor/bin/hw/rild -c 2
     group radio cache inet misc audio sdcard_r sdcard_rw diag log
     capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW
 
+on property:persist.radio.multisim.config=dsds
+    enable vendor.ril-daemon2
+
 service charger /vendor/bin/charger
     class charger
     group system graphics
     seclabel u:r:healthd:s0
+    writepid /dev/cpuset/system-background/tasks
 
 service vendor.msm_irqbalance /vendor/bin/msm_irqbalance -f /system/vendor/etc/msm_irqbalance.conf
     class core
@@ -570,8 +629,14 @@ service vendor.msm_irqbal_lb /vendor/bin/msm_irqbalance -f /system/vendor/etc/ms
     disabled
     writepid /dev/cpuset/system-background/tasks
 
+on charger
+    setprop persist.sys.usb.config mass_storage
+    load_system_props
+    start qcom-post-boot
+
 on property:init.svc.surfaceflinger=restarting
-    restart vendor.hwcomposer-2-1
+    stop vendor.hwcomposer-2-1
+    start vendor.hwcomposer-2-1
 
 service time_daemon /system/vendor/bin/time_daemon
     class main
