@@ -24,7 +24,7 @@ $(call inherit-product, vendor/coolpad/c106/c106-vendor.mk)
 # Overlay
 DEVICE_PACKAGE_OVERLAYS += \
     $(LOCAL_PATH)/overlay \
-    $(LOCAL_PATH)/overlay-lineage
+    $(LOCAL_PATH)/overlay-bootleg
 
 PRODUCT_ENFORCE_RRO_TARGETS := \
     framework-res
@@ -420,14 +420,6 @@ PRODUCT_COPY_FILES += \
 # USB
 PRODUCT_PACKAGES += \
     com.android.future.usb.accessory
-
-# Vendor security patch level
-PRODUCT_PROPERTY_OVERRIDES += \
-    ro.lineage.build.vendor_security_patch=2016-12-01
-
-# VR
-PRODUCT_PACKAGES += \
-    vr.msm8952
 
 # Whitelisted app
 PRODUCT_COPY_FILES += \
